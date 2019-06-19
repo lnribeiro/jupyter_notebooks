@@ -1,19 +1,203 @@
 ---
-title: "R Notebook"
-output: html_notebook
+title: "Optimization -- 1 -- Line Search"
+author: "Lucas N. Ribeiro"
+date: "`r Sys.Date()`"
+# output: pdf_document
+output: html_document
 ---
 
-This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+# Introduction
 
-Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
+I have been reading Nocedal and Wright's "Numerical Optimization". I would like to maintain a series of notebooks where I implement the numerical algorithms discussed in the book. This is a way to practice my R skills and to materialize the concepts I'm learning.
+
+The book's first chapter is simply an introduction to optimization problems and the second chapter is an overview of of optimization algorithms:
+
+  * Constrained vs. unconstrained optimization
+  * Line search vs. trust region
+  * Smooth vs. non-smooth problems
+  * Scaling and rates of convergence
+  
+The third chapter discusses *Line search methods* and this is the subject of the present notebook.
+
+# Line search methods
+
+Basically, a line search method finds a direction $p_k$ and decides how far to move along this direction. These methods iterate according to
+
+$$
+  x_{k+1} = x_{k} + \alpha_k p_k
+$$
+where $\alpha_k \in \mathbb{R}$ is the step size.
+
+The step direction is usually required to be a descent direction, i.e., $\nabla f_k ^T p_k < 0$. This result comes from Taylor's theorem. Assuming that $f$ is continuously differentiable, then
+
+$$
+  f(x + p) = f(x) + \nabla f(x+tp)^Tp
+$$
+Since we are usually interested in minimizing $f$, then $f(x+p) \leq f(x)$ and $\nabla f(x+tp)^Tp < 0$.
+
+Search directions of interest usually have the form $p_k = -B_k^{-1} \nabla f_k$, where $B_k$ is a symmetric and non-singular matrix. In fact, we have:
+
+$$
+B_k = \begin{cases}
+I                     & \text{steepest descent}\\
+\nabla^2 f_k          & \text{Newton's method}\\
+\approx \nabla^2 f_k  & \text{Quasi-Newton}
+\end{cases}
+$$
+
+### Step length
+
+Ideally, we would select the step size to minimize $\phi(\alpha) = f(x_k + \alpha p_k)$ for $\alpha > 0$. But *exact* line search maybe expensive sometimes. 
+
+Usually we seek step sizes which satisfy the Wolfe conditions:
+
+1. A step size should give sufficient decresase in the objective function $f$:
+
+$$
+  f(x_k + \alpha p_k) \leq f(x_k) + c_1 \nabla f_k^T p_k
+$$
+where $c_1 \in (0,1)$. 
+
+2. curvature condition: only move to places where the slope smaller. This way, the first-order optimality condition, $\nabla f(x^*) = 0$ is seeked.
+
+$$
+  \nabla f(x_k + \alpha_k p_k)^T p_k \geq c_2 \nabla f_k^T p_k
+$$
+where $c_2 \in (c_1, 1)$
+
+### Backtracking
+
+The backtracking algorithm selects a step size with sufficient decrease. It's not optimal but it's rather simple.
+
+1. Choose $\bar{\alpha} > 0$ and $\rho, c \in (0,1)$;
+2. Set $\alpha \leftarrow \bar{\alpha}$
+3. Repeat until  $f(x_k + \alpha p_k) \leq f(x_k) + c \nabla f_k^T p_k$
+  * $\alpha \leftarrow \rho \alpha$
+4. Terminate with $\alpha_k \leftarrow \alpha$
+
+### Rate of convergence of line search methods
+
+The chapter discusses convergence properties of the steepest descent, quasi-Newton and Newton's methods. The steepest descent method is globally convergent with linear convergence rate. By **globally convergent** we mean:
+
+$$
+  \lim_{k\rightarrow \infty} \| \nabla f_k \| = 0
+$$
+It is also proven that quasi-Newton methods have linear convergence rate and Newton's method a quadratic rate.
+
+# Codes
+
+Let us first implement the optimization algorithms:
 
 ```{r}
-plot(cars)
+
+library(tidyverse)
+
+gradient_descent <- function(x_init, fungrad, alpha, maxit = 1000, threshold = 1e-9) {
+  x <- x_init
+  points <- tibble(x1 = x[1], x2 = x[2])
+  for (it in 1:maxit) {
+    p <- -fungrad(x)
+    x <- x + alpha*p
+    points <- points %>% rbind(as.vector(x))
+    
+    # check convergence
+    residual_vector <- points[it+1,] - points[it,]
+    residual <- norm(as.matrix(residual_vector), type = "2")
+    if (residual < threshold) break
+  }
+  sol <- list(x_min = x, x_points = points, n_it = it)
+  return(sol)
+}
+
+newtons_method <- function(x_init, fungrad, funhess, alpha, maxit = 1000, threshold = 1e-9) {
+  x <- x_init
+  points <- tibble(x1 = x[1], x2 = x[2])
+  for (it in 1:maxit) {
+    p <- -solve(funhess) %*% fungrad(x)
+    x <- x + alpha*p
+    points <- points %>% rbind(as.vector(x))
+    
+    # check convergence
+    residual_vector <- points[it+1,] - points[it,]
+    residual <- norm(as.matrix(residual_vector), type = "2")
+    if (residual < threshold) break
+  }
+  sol <- list(x_min = x, x_points = points, n_it = it)
+  return(sol)
+}
+
 ```
 
-Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+To experiment with the steepest descent and Newton's methods, let's consider first consider a quadratic function. It's convex and the linear searches are exact. Let 
 
-When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file). 
+$$
+f(x) = 0.5 x^T Q x - b^Tx
+$$
 
-The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+so its gradient is given by $\nabla f(x) = Qx - b$. Also the optimal step size is 
 
+$$
+  \alpha_k = \frac{\nabla f_k^T \nabla f_k}{\nabla f_k^T Q \nabla f_k}
+$$
+
+So, let's get to the code! First, let's define the quadratic function and its gradient.
+
+```{r}
+
+# Define functions and their gradients
+quadr_func <- function(x, Q, b) {
+  return(0.5*t(x)%*%Q%*%x - t(b)%*%x)
+}
+
+quadr_grad <- function(x, Q, b) {
+  return(Q%*%x - b)
+}
+
+quadr_hess <- function(Q) {
+  return(Q)
+}
+
+# Paraboloid parameters
+Q = matrix(c(10, 8,
+             -4, 2), 2, 2)
+
+b = c(3, -12)
+
+# Calculate Surface
+xlims <- -200:200
+ylims <- -200:200
+
+surface <- tibble(x = xlims, y = ylims)
+surface <- expand.grid(x=xlims, y=ylims) %>% 
+  rowwise() %>% 
+  mutate(f = quadr_func(c(x, y), Q, b))
+
+# Perform optimization
+gd_sol <- gradient_descent(x_init = c(100, 100),
+                           fungrad = function(x) quadr_grad(x, Q, b),
+                           alpha = 0.1
+)
+
+nm_sol <- newtons_method(x_init = c(-100, 100),
+                         fungrad = function(x) quadr_grad(x, Q, b),
+                         funhess = quadr_hess(Q),
+                         alpha = 1
+)
+
+ggplot() +
+  geom_contour(data = surface, aes(x=x, y=y, z=f), bins=10) +
+  geom_path(data = gd_sol$x_points, aes(x = x1, y = x2)) +
+  geom_path(data = nm_sol$x_points, color = "red", aes(x = x1, y = x2)) +
+  geom_point(data = gd_sol$x_points, aes(x = x1, y = x2)) +
+  geom_point(data = nm_sol$x_points, color = "red", aes(x = x1, y = x2))
+
+print("Gradient descent")
+print(gd_sol$x_min)
+print(quadr_func(gd_sol$x_min, Q, b))
+print(gd_sol$n_it)
+
+print("Newtons method")
+print(nm_sol$x_min)
+print(quadr_func(nm_sol$x_min, Q, b))
+print(nm_sol$n_it)
+```
