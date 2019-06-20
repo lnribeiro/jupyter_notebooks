@@ -90,14 +90,42 @@ Let us first implement the optimization algorithms:
 
 ```{r}
 
-library(tidyverse)
+suppressPackageStartupMessages(library(tidyverse))
 
-gradient_descent <- function(x_init, fungrad, alpha, maxit = 1000, threshold = 1e-9) {
+backtracking <- function(x, funval, fungrad, p, c = 0.5, alpha_bar = 1, rho = 0.5) {
+  
+  alpha <- alpha_bar
+  l <- funval(x + alpha*p)
+  r <- funval(x) + c*alpha*t(fungrad(x))%*%p
+  
+  while (l > r) {
+    alpha <- rho*alpha
+    l <- funval(x + alpha*p)
+    r <- funval(x) + c*alpha*t(fungrad(x))%*%p
+  }
+  
+  return(alpha)
+}
+
+gradient_descent <- function(x_init, funval, fungrad, alpha, maxit = 1000, threshold = 1e-9) {
   x <- x_init
   points <- tibble(x1 = x[1], x2 = x[2])
+  
   for (it in 1:maxit) {
+    # set search direction
     p <- -fungrad(x)
+    
+    if (alpha == "backtracking") {
+      alpha <- backtracking(x = x,
+                            funval = funval,
+                            fungrad = fungrad,
+                            p = p)
+    }
+    
+    # move along search direction
     x <- x + alpha*p
+    
+    # update path dataframe
     points <- points %>% rbind(as.vector(x))
     
     # check convergence
@@ -109,12 +137,18 @@ gradient_descent <- function(x_init, fungrad, alpha, maxit = 1000, threshold = 1
   return(sol)
 }
 
-newtons_method <- function(x_init, fungrad, funhess, alpha, maxit = 1000, threshold = 1e-9) {
+newtons_method <- function(x_init, funval, fungrad, funhess, alpha = 1, maxit = 1000, threshold = 1e-9) {
   x <- x_init
   points <- tibble(x1 = x[1], x2 = x[2])
+  
   for (it in 1:maxit) {
-    p <- -solve(funhess) %*% fungrad(x)
+    # set Newton's direction
+    p <- -solve(funhess(x)) %*% fungrad(x)
+    
+    # move along search direction
     x <- x + alpha*p
+    
+    # update path dataframe
     points <- points %>% rbind(as.vector(x))
     
     # check convergence
@@ -153,7 +187,7 @@ quadr_grad <- function(x, Q, b) {
   return(Q%*%x - b)
 }
 
-quadr_hess <- function(Q) {
+quadr_hess <- function(x, Q, b) {
   return(Q)
 }
 
@@ -174,14 +208,16 @@ surface <- expand.grid(x=xlims, y=ylims) %>%
 
 # Perform optimization
 gd_sol <- gradient_descent(x_init = c(100, 100),
+                           funval = function(x) quadr_func(x, Q, b),
                            fungrad = function(x) quadr_grad(x, Q, b),
-                           alpha = 0.1
+                           alpha = "backtracking"
+                           # alpha = 0.1
 )
 
 nm_sol <- newtons_method(x_init = c(-100, 100),
+                         funval = function(x) quadr_func(x, Q, b),
                          fungrad = function(x) quadr_grad(x, Q, b),
-                         funhess = quadr_hess(Q),
-                         alpha = 1
+                         funhess = function(x) quadr_hess(x, Q, b)
 )
 
 ggplot() +
@@ -200,4 +236,67 @@ print("Newtons method")
 print(nm_sol$x_min)
 print(quadr_func(nm_sol$x_min, Q, b))
 print(nm_sol$n_it)
+```
+
+
+Now applying to a more interesting function
+
+```{r}
+fourth_func <- function(x) {
+  return(10*x[1]^4 -20*(x[1]^2)*x[2] + x[1]^2 -2*x[1] + 10*x[2]^2 + 1)
+}
+
+fourth_grad <- function(x) {
+  G <- matrix(c(40*x[1]^3 - 40*x[1]*x[2] + 2*x[1] - 2,
+                -20*x[1]^2 + 20*x[2]), 2, 1)
+  return(G)
+}
+
+fourth_hess <- function(x) {
+  H <- matrix(c(120*x[1]^2 -40*x[2]+2,
+                -40*x[1],
+                -40*x[1],
+                20), 2, 2)
+  return(H)
+}
+
+# Calculate Surface
+xlims <- seq(-1000, 1000, 100)
+ylims <- seq(-1000, 1000, 100)
+
+surface <- tibble(x = xlims, y = ylims)
+surface <- expand.grid(x=xlims, y=ylims) %>% 
+  rowwise() %>% 
+  mutate(f = quadr_func(c(x, y), Q, b))
+
+# Perform optimization
+gd_sol <- gradient_descent(x_init = c(100, 10),
+                           funval = fourth_func,
+                           fungrad = fourth_grad,
+                           alpha = "backtracking"
+)
+
+nm_sol <- newtons_method(x_init = c(-100, 10),
+                         funval = fourth_func,
+                         fungrad = fourth_grad,
+                         funhess = fourth_hess
+)
+
+ggplot() +
+  geom_contour(data = surface, aes(x=x, y=y, z=f), bins=10) +
+  geom_path(data = gd_sol$x_points, aes(x = x1, y = x2)) +
+  geom_path(data = nm_sol$x_points, color = "red", aes(x = x1, y = x2)) +
+  geom_point(data = gd_sol$x_points, aes(x = x1, y = x2))
+  geom_point(data = nm_sol$x_points, color = "red", aes(x = x1, y = x2))
+
+print("Gradient descent")
+print(gd_sol$x_min)
+print(fourth_func(gd_sol$x_min))
+print(gd_sol$n_it)
+
+print("Newtons method")
+print(nm_sol$x_min)
+print(fourth_func(nm_sol$x_min))
+print(nm_sol$n_it)
+
 ```
