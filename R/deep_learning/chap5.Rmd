@@ -1,0 +1,141 @@
+---
+title: "chapter 5 notes -- machine learning basics"
+author: "Lucas N. Ribeiro"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+with these notes, I intend to review machine learning concepts, methods and algorithms. I took a course on machine learning and pattern recognition in 2015. We used Bishop's book and applied some algorithms with scikit learn. Refreshing these concepts will surely be very important to this deep learning journey.
+
+# 5.0 Introduction
+
+> Machine learning is essentially a form of applied statistics with increased emphasis on the use of computers to:
+* statistically estimate complicated functions and
+* a decreased emphasis on proving confidence intervals around these functions;
+
+Estimators:
+  * frequentist
+  * bayesian
+
+Algorithms:
+  * supervised
+  * unsupervised
+
+# 5.1 learning algorithms
+
+Learning definition;
+
+> A computer program is said to learn from experience E with respect to some class of tasks T and performance measure P, if its performance at tasks in T, as measured by P, improves with experience E.
+
+### 5.1.1 tasks
+
+  * classification: $f:\mathbb{R} \rightarrow \mathbb{Z}$
+  * regression: $f:\mathbb{R} \rightarrow \mathbb{R}$
+  * transcription: unstructred data -> discrete textual form
+  * machine translation: en -> fr
+  * structured output: parsing
+  * anomaly detection
+  * synthesis and sampling: creating new data?
+  * imputation of missing values
+  * denoising
+  * prob density function estimation
+  * 
+  
+### 5.1.2 performance measure
+
+  * model accuracy
+  * error rate
+  
+test set
+
+### 5.1.3 experience
+
+unsupervised/supervised learning
+
+in the context of deep learning, unsupervised learning means learning the entire pdf that generated a dataset
+
+or:
+  * unsupervised: learn $p(x)$ from data
+  * supervised: observing samples x and trying to figure out the associated value y, est $p(y given x)$
+  
+  * reinforcement learning: algorithms interact with an environment --> feedback loop ("semi supervised learning")
+  
+### 5.1.4 example: linear regression
+
+linear model $\hat{y} = w^Tx$
+
+performance measure: mean square error (MSE)
+
+* train set
+* test set
+
+solve the normal equations
+
+# 5.2 Capacity, overfitting and underfitting
+
+* generalization: ability to perform well on previously unobserved data
+* generalization error is also called *test error*, measured on a test set
+* how does training data affects test error?
+  - data generating process
+  - iid assumption
+  - make training error small and make gap between training and test error small
+* underfitting: train error is not small
+* overfitting: gap between train and test is large
+
+--
+
+We can control whether a model is more likely to overfit or underfit by altering its capacity.
+
+capacity: it's something like model order. so, if you increase the order, it the algorithm may  generalize better
+
+>  Models with insufficient capacity are unable to solve complex tasks. Models with high capacity can solve complex tasks, but when their capacity is higher than needed to solve the present task they may overfit.
+
+* Occam's razor :)
+* Vapnik-Chervonenkis dimension: largest possible value of $m$ which there exists a training st of $m$ different points that the classifier can label arbitrarly
+* non-parametric models: possibly algorithms that searches over possible distributions. nearest neighbor regression: keeps only the training set and probes the nearest point when new data is available.
+
+>  The ideal model is an oracle that simply knows the true probability distribution that generates the data. Even such a model will still incur some error on many problems, because there may still be some noise in the distribution.
+
+### 5.2.1 The "No Free Lunch" Theorem
+
+> The no free lunch theorem for machine learning (Wolpert, 1996) states that, averaged over all possible data generating distributions, every classification algorithm *has the same error rate when classifying previously unobserved points*.
+
+> Fortunately, these results hold only when we average over all possible data generating distributions. 
+
+> This means that the goal of machine learning research is not to seek a universal learning algorithm or the absolute best learning algorithm. Instead, our goal is to understand what kinds of distributions are relevant to the “real world” that an AI agent experiences
+
+### Regularization
+
+Regularization: modification in the algorithm cost function to reduce generalization error but not the training error
+
+# 5.3 hyperparameters and validation sets
+
+# 5.4 estimators, bias and variance
+
+# 5.5 maximum likelihood estimation
+
+# 5.6 bayesian statistics
+
+# 5.7 supervised learning algorithms
+
+# 5.8 unsupervised learning algorithms
+
+# 5.9 stochastic gradient descent
+
+# 5.10 building a machine learning algorithm
+
+# 5.11 challenges motivating deep learning
+
+
+
+
+
+
+
+
+
+
+
+
+
+
