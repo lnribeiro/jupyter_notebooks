@@ -1,0 +1,104 @@
+\documentclass{beamer}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath, amssymb, amsthm, mathtools, gensymb}
+
+\newcommand{\tran}{\mathsf{T}}
+\newcommand{\mc}[1]{\ensuremath{\mathcal{#1}}}
+\newcommand{\mbb}[1]{\ensuremath{\mathbb{#1}}}	
+
+\title{Notes on Nocedal and Wright's ``Numerical Optimization''\\Chapter 4 --  ``Trust-Region Methods''}
+\author{Lucas N. Ribeiro}
+\date{}
+ 
+\begin{document}
+ 
+\frame{\titlepage}
+ 
+\begin{frame}[allowframebreaks]{Introduction}
+	\begin{itemize}
+		\item Trust-region methods define a region around the current iterate within which they trust the model to be an adequate representation of the objective function.
+		
+		\item Example: quadratic model (2nd order Taylor expansion around $x_k$)
+		\begin{equation}
+			m_k(p) = f_k - \nabla_k^\tran p + 0.5 p^\tran B_k p,
+		\end{equation}
+		where $f_k = f(x_k)$, $\nabla f_k = \nabla f(x_k)$ and $B_k$ is some symmetric matrix. If $B_k = \nabla^2f(x_k)$ then we call trust-region Newton method.
+		
+		\item To obtain each step, we seek a solution of the subproblem:
+		\begin{equation} \label{eq:prob}
+			\min_{p \in \mbb{R}^n} m_k(p) = f_k + \nabla f_k^\tran p + 0.5 p^\tran B_k p,\quad \text{s.t.}\, \|p\| \leq \Delta_k,
+		\end{equation}
+		where $\Delta_k$ is the trust-region radius.
+		
+		\item \emph{full step}: when $B_k$ is positive definite and $\|B_k^{-1}\nabla f_k\| \leq \Delta_k$, the solution of \eqref{eq:prob} is $p_k^B = -B_k^{-1} \nabla f_k$.
+		
+		\item Full step might be expensive. Consider \emph{approximations}.
+	\end{itemize}
+\end{frame} 
+
+\begin{frame}[allowframebreaks]{Algorithm outline}
+	\begin{itemize}
+		\item First issue: how to choose the trust-region radius $\Delta_k$ at each iteration?
+		\item Define the metric
+		\begin{equation}
+			\rho_k = \frac{f(x_k) - f(x_k + p_k)}{m_k(0) - m_k(p_k)}
+		\end{equation} 
+		The numerator is the actual reduction and the denominator the predicted reduction.
+		\item Decisions:
+		\begin{itemize}
+			\item $\rho_k < 0$ step rejected (as the new obj. value is larger than the current);
+			\item $\rho_k \approx 1$ good agreement, it's safe to expand the radius at the next it;
+			\item $\rho_k > 1$ keep it;
+			\item $0 \leq \rho_k \leq 1 $ shrink it.
+		\end{itemize}
+	\end{itemize}
+	\vspace{2cm}
+	
+	Algorithm outline (more details in the book)
+	\begin{enumerate}
+		\item Initialize parameters;
+		\item Obtain $p_k$ by (approximately) solving \eqref{eq:prob};
+		\item Evaluate $\rho_k$
+		\item Update $x_k = x_k + p_k$ (or not if decided based on $\rho_k$)
+	\end{enumerate}
+\end{frame} 
+
+\begin{frame}{Solving \eqref{eq:prob}}
+	Strategies for approximate solutions
+	\begin{itemize}
+		\item dogleg method -- when $B_k$ is positive definite;
+		\item 2D subspace minimization -- applied to indefinite $B_k$;
+		\item Steihaug's method -- $B_k$ is the exact Hessian.
+	\end{itemize}
+\end{frame} 
+
+\begin{frame}[allowframebreaks]{The Cauchy point}
+	Although we are seeking the optimal solution for \eqref{eq:prob}, it is enough for global convergence purposes to find an approx. solution $p_k$ that lies within the trust region and gives \textbf{sufficient reduction} in the model.
+	
+	The sufficient reduction can be quantified in terms of the Cauchy point.
+	
+	To find the Cauchy point, we use the following procedure:
+	
+	\begin{enumerate}
+		\item Find $p_k^s = \arg \min_{p} f_k + \nabla f_k^\tran p = -\frac{\Delta_k}{\|\nabla f_k \|} \nabla f_k$
+		\item Calculate the scalar satisfying the trust-region bound:
+		\[
+			\tau_k = \arg \min_{\tau > 0} m_k (\tau p_k^s)
+		\]
+		\item The Cauchy point is then given by $p_k^C = \tau_k p_k^s$.
+	\end{enumerate}
+
+	The Cauchy point is inexpensive to calculate and is important in deciding if an approx solution of \eqref{eq:prob} is acceptable. Specifically, a trust region method will be globally convergent if its steps attain a sufficient reduction in $m_k$, i.e., they give a reduction on $m_k$ that is at least some fixed multiple of the decrease attained by the Cauchy step!
+	
+	Improving on the Cauchy step:
+	
+	\begin{itemize}
+		\item Dogleg method
+		\item 2D subspace min
+		\item Steihaug
+	\end{itemize}
+\end{frame}
+
+ 
+\end{document}
+
