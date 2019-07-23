@@ -1,0 +1,145 @@
+\documentclass{beamer}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath, amssymb, amsthm, mathtools, gensymb}
+
+\setbeamertemplate{footline}[frame number]
+\beamertemplatenavigationsymbolsempty
+\usecolortheme{seagull}
+
+\newcommand{\tran}{\mathsf{T}}
+\newcommand{\mc}[1]{\ensuremath{\mathcal{#1}}}
+\newcommand{\mbb}[1]{\ensuremath{\mathbb{#1}}}	
+
+\title[Chapter 6]{Notes on Nocedal and Wright's ``Numerical Optimization''\\Chapter 6 --  ``Practical Newton Methods''}
+\author{Lucas N. Ribeiro}
+\date{}
+ 
+\begin{document}
+ 
+\frame{\titlepage}
+ 
+\begin{frame}[allowframebreaks]{Introduction}
+	\begin{itemize}
+		\item Line search methods:
+		\[
+			x_{k+1} = x_k + \alpha_k p_k
+		\]
+		\item $p_k$ is the search direction (must point to descent direction -- leading to global convergence!)
+		\item Gradient descent: $p_k = -\nabla f_k$.
+		\item More general: $p_k = -B_k^{-1} \nabla f_k$, where $B_k$ is a symmetric and non-singular matrix.
+		\item Newton method: $B_k = \nabla^2 f_k$ (Hessian).
+		\item Problems with standard Newton method: Hessian may not be positive definite all the time, and/or close to singular, possibly leading to ascent directions!
+		\item The Newton step is obtained by solving the symmetric $n\times n$ linear system:
+		\[
+			\nabla^2 f(x_k) p_k^N = -\nabla f(x_k)
+		\]
+		\item Approaches to ensure good Newton step:
+		\begin{enumerate}
+			\item Solve the Newton problem by means of a conjugate gradient (Newton-CG)
+			\item Modifying the Hessian matrix $\nabla^2 f(x_k)$ so it becomes sufficiently positive definite (modified Newton method)
+		\end{enumerate}
+	
+		\item Computational complexity concerns:
+		\begin{enumerate}
+			\item Newton-CG method -- terminate CG iteration before an exact solution is found (inexact Newton approach)
+			\item Computation of the Hessian matrix is quite complex
+		\end{enumerate}
+	\end{itemize}
+\end{frame}
+
+\begin{frame}[allowframebreaks]{Inexact Newton steps}
+	\begin{itemize}
+		\item Standard Newton method has to calculate its step exactly, which can be expensive
+		\item Classical linear system methods (Gaussian elimination etc) may be too complex when the number of variables is large $\rightarrow$ iterative solutions are appealing here
+		\item An inexact solution may work
+		\item Here we consider the CG residual $r_k = \nabla^2 f(x_k) p_k + \nabla f(x_k) $
+		\item (Note that the standard CG residual is $r_k = Ax_k -b$!)
+		\item A typical condition checked to terminate the iterative solver is 
+		\[
+			\|r_k\| \leq \eta_k \| \nabla f(x_k) \|
+		\]
+		where $\eta_k$ is the forcing sequence. This factor is important to determine the rate of convergence of inexact Newton methods.
+	\end{itemize}
+	\vspace{0.5cm}
+	Rate of convergence results
+	\begin{itemize}
+		\item Local convergence is obtained simply by ensuring that $\eta_k$ is bounded away from $1$.
+		\item Rate of convergence is linear if $\eta_k \rightarrow 0$ and superlinear if $\eta_k = O(\| \nabla f(x_k) \|)$
+	\end{itemize}
+\end{frame}
+
+\begin{frame}[allowframebreaks]{Line search Newton methods}
+	\begin{itemize}
+		\item Each iteration has the form $x_{k+1} = x_k + \alpha_k p_k$
+		\item $alpha_k$ is a step length that satisfied Wolfe-Goldstein conditions and can be obtained by backtracking (although $\alpha_k=1$ is a good initial guess)
+		\item $p_k$ is either the exact Newton step or its approximation
+	\end{itemize}
+
+	Line search Newton CG
+	\begin{itemize}
+		\item Applies CG to calculate the Newton step.
+		\item Recall that CG is designed to positive definite systems, but Hessian may admit negative eigenvalues, thus a test is introduced in the Newton CG to check for negative curvatures
+		\item Preconditioning can be applied to correct the system's curvature.
+	\end{itemize}
+
+	\begin{block}{Line Search Newton CG}
+		\begin{itemize}
+			\item Given initial point $x_0$
+			\item For ...
+			\begin{enumerate}
+				\item Compute search direction applying CG method to $\nabla^2 f(x_k) p = -\nabla f(x_k)$. Terminate if $\|r_k\| \leq \min (0.5, \sqrt{\nabla f(x_k)}) \|\nabla f(x_k)\|$ or if negative curvature is encountered.
+				\item Find step size $\alpha_k$
+				\item Set $x_{k+1} = x_k + \alpha_k p_k$ 
+			\end{enumerate}
+		\end{itemize}
+	\end{block}
+\end{frame}
+
+\begin{frame}[allowframebreaks]{Modified Newton's method}
+\begin{itemize}
+	\item The search direction can be obtained by linear algebra factorization techniques.
+	\item If the Hessian is not definite positive, we can modify this by adding a matrix $E_k$ so that it becomes nice.
+	\item Global convergence can be attained if $E_k$ satisfies the bounded modified factorization property
+	\item In this case $B_k = \nabla^2 f(x_k) + E_k$ has bounded condition number
+	\item We discuss some Hessian modifications:
+	\begin{itemize}
+		\item Eigenvalue modification: changes negative eigenvalues to non-negative
+		\item Adding multiple of identity
+		\item Modified Cholesky factorization, Gershgorin modification: adds elements to the Cholesky diagonal
+	\end{itemize}
+\end{itemize}
+
+\begin{block}{Line Search Newton CG}
+	\begin{itemize}
+		\item Given initial point $x_0$
+		\item For ...
+		\begin{enumerate}
+			\item Factorize $B_k = \nabla^2 f(x_k) + E_k$
+			\item Solve $B_k p_k = -\nabla f(x_k)$
+			\item Find step size $\alpha_k$
+			\item Set $x_{k+1} = x_k + \alpha_k p_k$ 
+		\end{enumerate}
+	\end{itemize}
+\end{block}
+\end{frame}
+
+\begin{frame}{Trust-region Newton method}
+	\begin{itemize}
+		\item Trust-region methods do not require the quadratic model to be positive definite, then we can use $B_k = \nabla^2 f(x_k)$ and get $p_k$ by solving
+		\[
+		\min_{p} m_k(p)= f_k + \nabla f_k^\tran p + 0.5 p^\tran B_k p
+		\]
+		subject to $\| p \| \leq \Delta_k$.
+		\item It can be solved by many techniques, including:
+		\begin{itemize}
+			\item Newton dogleg method
+			\item 2D subspace minimization
+			\item Accurate solution using iteration
+			\item CG method (CG-Steihaug!)
+			\item Lanczos method
+		\end{itemize}
+	\end{itemize}
+\end{frame}
+ 
+\end{document}
+
