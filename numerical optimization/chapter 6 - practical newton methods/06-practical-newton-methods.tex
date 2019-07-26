@@ -24,7 +24,7 @@
 		\[
 			x_{k+1} = x_k + \alpha_k p_k
 		\]
-		\item $p_k$ is the search direction (must point to descent direction -- leading to global convergence!)
+		\item $p_k$ is the search direction (must point to descent direction $p_k^\tran \nabla f_k <0$ -- leading to global convergence!)
 		\item Gradient descent: $p_k = -\nabla f_k$.
 		\item More general: $p_k = -B_k^{-1} \nabla f_k$, where $B_k$ is a symmetric and non-singular matrix.
 		\item Newton method: $B_k = \nabla^2 f_k$ (Hessian).

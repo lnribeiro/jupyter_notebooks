@@ -1,0 +1,125 @@
+\documentclass{beamer}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath, amssymb, amsthm, mathtools, gensymb}
+
+\setbeamertemplate{footline}[frame number]
+\beamertemplatenavigationsymbolsempty
+\usecolortheme{seagull}
+
+\newcommand{\tran}{\mathsf{T}}
+\newcommand{\mc}[1]{\ensuremath{\mathcal{#1}}}
+\newcommand{\mbb}[1]{\ensuremath{\mathbb{#1}}}	
+
+\title[Chapter 7]{Notes on Nocedal and Wright's ``Numerical Optimization''\\Chapter 6 --  ``Calculating Derivatives''}
+\author{Lucas N. Ribeiro}
+\date{}
+ 
+\begin{document}
+ 
+\frame{\titlepage}
+ 
+\begin{frame}[allowframebreaks]{Introduction}
+	\begin{itemize}
+		\item Sometimes the user can provide a function that calculates the gradient and the Hessian; sometimes not.
+		\item When these information are not available, we can calculate them by ourselves
+		\item There are basically three approaches to achieve that:
+		\begin{itemize}
+			\item Finite differencing: Observe the response of the function of interest to small perturbations, e.g., using the central difference formula;
+			\item Automatic differentiation: breaks the function down into elementary operations and applies the chain rule.
+			\item Symbolic differentiation: algebraic specification and symbolic manipulation. Used in Maple, MATLAB, etc.
+		\end{itemize} 
+		\item Besides algorithms, gradients and Hessians are useful for sensitivity analysis in economics, etc.
+	\end{itemize}
+\end{frame}
+
+\begin{frame}[allowframebreaks]{Finite-Difference Derivative Approximations}
+	Let us first derive the forward-difference formula from Taylor's theorem. If $f$ is twice continuously differentiable, then:
+	\begin{equation} \label{eq:taylor}
+		f(x+p) = f(x) + \nabla f(x)^\tran p + 0.5 p^\tran \nabla^2 f(x+tp) p
+	\end{equation}
+	Let us assume $L$ is a bound on the norm of $\nabla^2 f(\cdot)$. It means that \[\exists L \mid \| \nabla^2 f \| < L\] for whatever argument of the Hessian. Then, the norm of the last term in \eqref{eq:taylor} is bounded as
+	\begin{align}
+	\|0.5 p^\tran \nabla^2 f(x+tp) p\| &< 0.5 \| p^\tran \| \| \nabla^2 f(x+tp) \| \|p \|\\
+	&< (L/2) \|p\|^2
+	\end{align}
+	where we used Cauchy-Schwarz. By isolating the quadratic term in \eqref{eq:taylor} and applying its bound, we get:
+	\begin{equation} \label{eq:bound}
+		\| f(x+p) - f(x) - \nabla f(x)^\tran p \| \leq (L/2) \|p\|^2
+	\end{equation}
+	
+	Now, set $p=\epsilon e_i$, where $e_i$ is the $i$th canonical vector. Then \[ \nabla f(x)^\tran p = \epsilon \partial f /\partial x_i\]
+	Equation~\eqref{eq:bound} can be rearranged as 
+	\begin{gather}
+	\| f(x+\epsilon e_i) -f(x) - \epsilon \partial f/\partial x_i\| \leq (L/2) \epsilon^2
+	\end{gather}
+	The inequality above implies
+	\begin{equation}
+	\partial f/\partial x_i = \frac{f(x+\epsilon e_i) -f(x)}{\epsilon} + \delta
+	\end{equation}
+	where $|\delta| \leq (L/2)\epsilon$. When $\epsilon \rightarrow 0$, the error vanishes and the finite difference goes to the partial derivative.
+	
+	A typical choice for $\epsilon$ is $\sqrt{\mathbf{u}}$, where $\mathbf{u}$ is the unit round-off.
+	
+	A more accurate approximation is the central difference formula. Assuming the existence of second order derivative of $f$ and Lipschitz continuity:
+	\begin{align}
+	f(x+p) &= f(x) + \nabla f(x)^\tran p + 0.5 p^\tran \nabla^2 f(x+tp)p \\
+		   &= f(x) + \nabla f(x)^\tran p + 0.5 p^\tran \nabla^2 f(x)p + O(\|p\|^3).
+	\end{align}
+	We set $p = \epsilon e_i$ and $p= -\epsilon e_i$. Then we have:
+	\begin{gather}
+		f(x+\epsilon e_i) = f(x) + \epsilon \frac{\partial f}{\partial x_i} + 0.5 \epsilon^2 \frac{\partial f^2}{\partial x_i^2} + O(\epsilon^3) \label{eq:s1} \\ 
+		f(x-\epsilon e_i) = f(x) - \epsilon \frac{\partial f}{\partial x_i} + 0.5 \epsilon^2 \frac{\partial f^2}{\partial x_i^2} + O(\epsilon^3) \label{eq:s2}
+	\end{gather} 
+	Subtracting \eqref{eq:s2} from \eqref{eq:s1} and dividing by $2\epsilon$ gives:
+	\begin{equation}
+		\frac{\partial f}{\partial x_i} = \frac{f(x+\epsilon e_i) - f(x-\epsilon e_i)}{2 \epsilon} + O(\epsilon^2)
+	\end{equation}
+	\begin{itemize}
+		\item Now the error is $O(\epsilon^2)$ (unlike $O(\epsilon)$ in the forward-difference)
+		\item More complex, though. Has to evaluate $f$ at two different points.
+	\end{itemize}
+
+	\textbf{Approximating a Jacobian} -- 
+	Now consider a function $r:\mathbb{R}^n\rightarrow \mathbb{R}^m$. The Jacobian matrix is defined as $J(x) = [ \partial r_m / \partial x_n ]$.
+	
+	Using Taylor's theorem, we can deduce that
+	\[
+		\| r(x+p) -r(x) - J(x)p\| \leq (L/2) \|p\|^2
+	\]
+	Sometimes we wish an estimate for $J(x)p$ instead of the full Jacobian. In this case, we have
+	\[
+		J(x)p = \frac{r(x+\epsilon p) - r(x)}{\epsilon} + O(\epsilon)
+	\]
+	When we wish the full matrix, we can compute one column at a time:
+	\[
+		\partial r / \partial x_i = \frac{r(x+\epsilon e_i)-r(x)}{\epsilon} + O(\epsilon)
+	\]
+	Computationally efficient methods that exploit possible sparsity can be derived.
+	
+	\textbf{Approximating the Hessian} -- From Taylor's theorem:
+	\[
+		\nabla f(x+p) = \nabla f(x) + \nabla^2 f(x) p + O(\| p \|^2)
+	\]
+	and
+	\[
+		\partial \nabla f / \partial x_i = \frac{\nabla f(x+\epsilon e_i) - \nabla f(x)}{\epsilon}
+	\]
+	Sometimes we wish to estimate only $\nabla^2 f(x) p$ and we can achieve it by
+	\[
+		\nabla^2 f(x) p \approx \frac{\nabla f(x+\epsilon p) - \nabla f(x)}{\epsilon}
+	\]
+	Note that, so far, we require knowledge of the gradient vector. When it's not available we can plug our gradient approximations into that of Hessian:
+	\begin{equation}
+	\frac{\partial^2 f}{\partial x_i \partial x_j} = \frac{f(x+\epsilon e_i + \epsilon e_j) - f(x+\epsilon e_i) - f(x+\epsilon e_j) + f(x)}{\epsilon^2} + O(\epsilon).
+	\end{equation}
+\end{frame}
+
+\begin{frame}{Automatic Differentiation}
+	\begin{itemize}
+		\item Any function (no matter how complicated) is built by simple operation such as sums, multiplications and exponentiations. 
+		\item The basic principle of automatic differentiation is breaking down functions in these operations and applying the chain rule.
+	\end{itemize}
+\end{frame} 
+
+\end{document}
+
