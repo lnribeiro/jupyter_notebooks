@@ -1,0 +1,45 @@
+\documentclass{beamer}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath, amssymb, amsthm, mathtools, gensymb}
+
+\setbeamertemplate{footline}[frame number]
+\beamertemplatenavigationsymbolsempty
+\usecolortheme{seagull}
+
+\newcommand{\tran}{\mathsf{T}}
+\newcommand{\mc}[1]{\ensuremath{\mathcal{#1}}}
+\newcommand{\mbb}[1]{\ensuremath{\mathbb{#1}}}	
+
+\title[Chapter 7]{Notes on Dahlmann, Parkvall, Skold's ``5G NR''\\Chapter 1 --  ``What's 5G''}
+\author{Lucas N. Ribeiro}
+\date{}
+
+\begin{document}
+	
+	\frame{\titlepage}
+	
+	\begin{frame}[allowframebreaks]{Introduction}
+	Different generations of mobile communications
+	\begin{itemize}
+		\item 1980s: foundations of mobile telephony (1G);
+		\item 1990s: mobile telephony for everyone (2G);
+		\item 2000s: foundations of mobile broadband (3G);
+		\item 2010s: enhanced mobile broadband (4G - LTE);
+	\end{itemize}
+	
+	The next generation  -- 5G/NR -- Use cases
+	\begin{itemize}
+		\item enhanced mobile broadband (eMBB): enhancing mobile broadband, increasing rates, capacity, etc of today's networks;
+		\item massive machine-type comm (mMTC): massive numbers of devices (sensors) connected. Requirements: low energy consumption and cost, high data rate not very important. Comm. foundation for the internet of things;
+		\item ultra reliable and low-latency communication (URLLC): very low latency and extreme reliability for factory automation, traffic safety, etc
+	\end{itemize}
+	
+	New Radio -- The new radio access technology -- NR reuses many features of LTE , however it is not restricted by a need to maintain backwards compatibility.
+	
+	5GCN -- The new 5G core network to whom NR will connect.
+	
+\end{frame}
+
+
+\end{document}
+
