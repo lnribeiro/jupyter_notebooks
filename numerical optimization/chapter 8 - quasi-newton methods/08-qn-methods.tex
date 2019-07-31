@@ -1,0 +1,147 @@
+\documentclass{beamer}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath, amssymb, amsthm, mathtools, gensymb}
+
+\setbeamertemplate{footline}[frame number]
+\beamertemplatenavigationsymbolsempty
+\usecolortheme{seagull}
+
+\newcommand{\tran}{\mathsf{T}}
+\newcommand{\mc}[1]{\ensuremath{\mathcal{#1}}}
+\newcommand{\mbb}[1]{\ensuremath{\mathbb{#1}}}
+
+\title[Chapter 7]{Notes on Nocedal and Wright's ``Numerical Optimization''\\Chapter 8 --  ``Quasi-Newton Methods''}
+\author{Lucas N. Ribeiro}
+\date{}
+ 
+\begin{document}
+ 
+\frame{\titlepage}
+ 
+\begin{frame}[allowframebreaks]{Introduction}
+	\begin{itemize}
+		\item First ideas: WC Davidon at Argonne National Lab in the 1950s
+		\item Requires only gradient knowledge to achieve super-linear convergence
+		\item Sometimes more efficient than Newton's method because it does not require 2nd order derivatives
+	\end{itemize}
+\end{frame}
+
+\begin{frame}[allowframebreaks]{BFGS}
+
+	\begin{block}{Highlights}
+		\begin{itemize}
+			\item BFGS iterates as $x_{k+1} = x_k + \alpha_k p_k$, where $p_k$ is obtained by minimizing a quadratic model at $x_k$, $p_k = -B_k^{-1}p_k$.
+			\item Instead of recalculating a fresh $B_k$ at each step, it updates in a simple manner.
+			\item The update is the solution of the \emph{secant equation}, which has solutions when the \emph{curvature condition} is satisfied
+			\item The BFGS updates $B_k$ with a rank-$2$ matrix at each iteration
+			\item Super-linear convergence
+		\end{itemize}
+	\end{block}
+
+	Consider the quadratic model and its gradient
+	\[
+	m_k(p)= f_k + \nabla f_k^\tran p + 0.5 p^\tran B_k p,\quad \nabla m_k(p) = \nabla f_k + B_k p.
+	\]
+
+	\newpage
+	\begin{block}{The secant equation}
+		\begin{itemize}
+			\item From the update formula, we define $s_k = x_{k+1} - x_k = B_{k+1} (\alpha_k p_k)$.
+			\item A reasonable condition for BFGS is that the gradient of $m_{k+1}$ should match the gradient of $f$ at the latest two iterates $x_k$ and $x_{k+1}$. We have:
+			\[
+				\nabla m_{k+1}(-\alpha_k p_k) = \nabla f_{k+1} - \alpha_k B_{k+1} p_k \stackrel{!}{=} \nabla f_k
+			\]
+			\item Therefore:
+			\[
+				B_{k+1}(\alpha_k p_k) = \nabla f_{k+1} - \nabla f_k
+			\]
+			Defining $y_k=\nabla f_{k+1} - \nabla f_k$, we have the secant equation:
+			\[
+				B_{k+1} s_k = y_k.
+			\]
+		\end{itemize}
+	\end{block}
+
+	\textbf{Solving the secant equations}
+	\begin{itemize}
+		\item We wish to solve the secant equation $B_{k+1} s_k = y_k$ to nicely update our line search.
+		\item Solving this system will be possible only if the curvature condition $s_k^\tran y_k >0$ (because then $B_{k+1}$ will be positive definite)
+		\item When $f$ is strongly convex, then it is always satisfied.
+		\item Otherwise, one has to be careful to enforce this condition on line search
+	\end{itemize}
+
+	When the curvature condition is satisfied, the system has in fact infinite solution. To find a single one, we impose additional conditions.
+
+	\newpage
+	
+	We consider the following problem:
+	\begin{subequations}
+		\begin{gather}
+			\min_B \| B- B_k \|\\
+			\text{subject to}\quad B=B^\tran,\quad B s_k = y_k
+		\end{gather}
+	\end{subequations}
+
+	\begin{itemize}
+		\item The norm in this problem may be whatever. The weighted Frobenius norm gives an easy solution considering the average Hessian weight matrix.
+		\item In this case, the unique solution to this problem gives the DFP formula:
+		\begin{equation}
+		B_{k+1} = (I- \gamma_k y_k s_k^\tran) B_k (I - \gamma_k s_k y_k^\tran) + \gamma_k y_k y_k^\tran
+		\end{equation}
+		where $\gamma_k = 1/(y_k^\tran s_k)$.
+		\item Note that in order to calculate the step $p_k = -B_k^{-1} p_k$, we need the inverse of $B_k$.
+		\item Define $H_k=B_k^{-1}$. Applying the Sherman-Morrison-Woodbury formula to $H_k$ gives: \[H_{k+1} = H_k - \frac{H_k y_k y_k^\tran H_k}{y_k^\tran H_k y_k} + \frac{s_k s_k^\tran}{y_k^\tran s_k}\]
+		\item It's a rank-$2$ update!
+		\item The DFP formula is effective, but was superseded by the BFGS formula
+	\end{itemize}
+
+	\newpage
+	
+	\begin{itemize}
+		\item The BFGS formula is obtained by reformulating the secant equation as
+		\begin{gather}
+		H_{k+1} y_k = s_k
+		\end{gather}
+		\item (Note that we just left-multiplied the old version by $H_{k+1}$)
+		\item To obtain a unique solution, we solve
+		\begin{subequations}
+			\begin{gather}
+			\min_H \| H- H_k \|\\
+			\text{subject to}\quad H=H^\tran,\quad H y_k = s_k
+			\end{gather}
+		\end{subequations}
+		\item and the solution is:
+		\begin{equation}
+		H_{k+1} = (I-\rho_k s_k y_k^\tran) H_k (I - \rho_k y_k s_k^\tran) + \rho_k s_k s_k^\tran
+		\end{equation}
+		where $\rho_k = 1/(y_k^\tran s_k)$.
+	\end{itemize}
+
+	\newpage
+	
+	\begin{block}{BFGS}
+		\begin{enumerate}
+			\item Given: starting point $x_0$, conv. threshold $\epsilon$ and inverse Hessian approx. $H_0$ (identity matrix, for example)
+			\item $k \leftarrow 0$
+			\item While $\| \nabla f_k \| > \epsilon$
+			\begin{itemize}
+				\item Compute search direction $p_k = -H_k \nabla f_k$
+				\item Update step $x_{k+1} = x_k + \alpha p_k$
+				\item Compute $H_{k+1}$ by means of the BFGS formula
+			\end{itemize}
+		\end{enumerate}
+	\end{block}
+
+\end{frame}
+
+\begin{frame}[allowframebreaks]{The SR1 method}
+\end{frame}
+
+\begin{frame}[allowframebreaks]{The Broyden class}
+\end{frame}
+
+\begin{frame}[allowframebreaks]{Convergence results}
+\end{frame}
+
+\end{document}
+
