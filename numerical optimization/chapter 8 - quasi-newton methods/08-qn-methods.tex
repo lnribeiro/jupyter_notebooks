@@ -27,7 +27,6 @@
 \end{frame}
 
 \begin{frame}[allowframebreaks]{BFGS}
-
 	\begin{block}{Highlights}
 		\begin{itemize}
 			\item BFGS iterates as $x_{k+1} = x_k + \alpha_k p_k$, where $p_k$ is obtained by minimizing a quadratic model at $x_k$, $p_k = -B_k^{-1}p_k$.
@@ -131,16 +130,43 @@
 			\end{itemize}
 		\end{enumerate}
 	\end{block}
-
 \end{frame}
 
 \begin{frame}[allowframebreaks]{The SR1 method}
+	\begin{itemize}
+		\item The symmetric rank-$1$ update has the form
+		\[
+			B_{k+1} = B_k + \sigma v v^\tran
+		\]
+		where $\sigma \in \{-1,1\}$ and $v$ is chosen so that $B_{k+1}$ satisfies the secant equation.
+		\item With some algebra, we have that:
+		\[
+			B_{k+1} = B_k + \frac{(y_k-B_ks_k)(y_k - B_k s_k)^\tran}{(y_k - B_k s_k)^\tran s_k}
+		\]
+		\item Applying the Sherman-Morrison formula:
+		\[
+			H_{k+1} = H_k + \frac{(s_k-H_ky_k)(s_k - H_k y_k)^\tran}{(s_k - H_k y_k)^\tran y_k}		
+		\]
+		\item The major drawback of SR1 concerns the denominator of the update term. If it vanishes, the algorithm may become unstable
+		\item Despite of that, there are some cases when the curvature condition does not hold and BFGS does not work, which SR1 can work nicely.
+		\item Trust-region implementations of SR1 and methods to prevent it from breaking down may turn this solution very effective
+	\end{itemize}
 \end{frame}
 
 \begin{frame}[allowframebreaks]{The Broyden class}
-\end{frame}
-
-\begin{frame}[allowframebreaks]{Convergence results}
+	\begin{itemize}
+		\item Broyden-class updating formulae follow the general formula:
+		\[
+			B_{k+1} = B_k - \frac{B_k s_k s_k^\tran B_k}{s_k^\tran B_k s_k} + \frac{y_k y_k^\tran}{y_k^\tran s_k} + \phi_k (s_k^\tran B_k s_k) v_k v_k^\tran
+		\]
+		where
+		\[
+			v_k = \left[ \frac{y_k}{y_k^\tran s_k} - \frac{B_k s_k}{s_k^\tran B_k s_k}\right]
+		\]
+		\item BFGS: $\phi_k = 0$, DFP: $\phi_k = 1$ and SR1: $\phi_k = s_k^\tran y_k /(s_k^\tran y_k - s_k^\tran B_k s_k)$.
+		
+		\item Broyden class algorithms has remarkable properties when applied with exact line searches
+	\end{itemize}
 \end{frame}
 
 \end{document}
