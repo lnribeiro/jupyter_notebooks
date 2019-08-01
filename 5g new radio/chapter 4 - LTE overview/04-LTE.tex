@@ -1,0 +1,74 @@
+\documentclass{beamer}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath, amssymb, amsthm, mathtools, gensymb}
+
+\setbeamertemplate{footline}[frame number]
+\beamertemplatenavigationsymbolsempty
+\usecolortheme{seagull}
+
+\newcommand{\tran}{\mathsf{T}}
+\newcommand{\mc}[1]{\ensuremath{\mathcal{#1}}}
+\newcommand{\mbb}[1]{\ensuremath{\mathbb{#1}}}	
+
+\title{Notes on Dahlmann, Parkvall, Skold's ``5G NR''\\Chapter 4 --  ``LTE overview''}
+\author{Lucas N. Ribeiro}
+\date{}
+
+\begin{document}
+	
+	\frame{\titlepage}
+	
+	\begin{frame}[allowframebreaks]{LTE Release 8 -- Basic Radio Access}
+		\textbf{Spectrum flexibility introduced}
+		\begin{itemize}
+			\item Carrier bw of 20 MHz for carrier frequencies of 1 GHz to 3 GHz
+			\item Support for paired and unpaired FDD and TDD
+		\end{itemize}
+		\textbf{Transmission scheme}
+		\begin{itemize}
+			\item OFDM (robust to time dispersion and ease of exploiting time and freq. domains + MIMO)
+			\item Subcarriers of 15 kHz and cyclic prefix of 4.7 $\mu$s -- 1200 subcarriers in 20 MHz spectrum allocation 
+			\item Uplink: DFT precoded OFDM for low PAR and high power amplifier efficiency
+			\item Time domain: 10 ms frames -- 1 ms sub-frames -- 14 OFDM symbols (smallest schedulable unit in LTE)
+		\end{itemize}
+		\newpage
+		\textbf{Cell-specific reference signals}
+		\begin{itemize}
+			\item The base station transmits one reference signal per layer
+			\item Usage: downlink channel estimation (coherent demod.), channel state reporting (scheduling), correction of device-side frequency errors, etc
+		\end{itemize}
+		\textbf{Scheduling}
+		\begin{itemize}
+			\item Channel-dependent scheduling
+			\item Fast hybrid ARQ -- upon downlink reception, the devices reports back to the base station the outcome of the decoding operation, which can re-transmit if erroneously received
+			\item For each 1 ms sub-frame, the scheduler controls which devices are to transmit or to receive and in what frequency resources
+			\item Scheduling decisions provided through the Physical Downlink Control Channel (PDCCH)
+			\item 1 PDCCH per UE
+			\item Uplink control signaling: HARQ acks, CSI for downlink scheduling through the Physical Uplink Control Channel (PUCCH)
+		\end{itemize}
+		\textbf{Multi-antenna schemes}
+		\begin{itemize}
+			\item SU-MIMO
+			\item A number $N_L$ of transmission layers are mapped to up to 4 antennas by means of a $N_A \times N_L$ precoder
+			\item $N_L$ is also known as transmission rank $\leq N_A$, the number of antennas
+			\item closed-loop spatial multiplexing, possibility of open-loop spatial multiplexing
+			\item Single-layer transmission -- $N_A \times 1$ precoders -- codebook-based beamforming
+		\end{itemize}
+	\end{frame}
+
+	\begin{frame}{LTE Evolution}
+		\begin{itemize}
+			\item Rel. 8 and 9 -- foundations of LTE [2008, 2009]
+			\item Rel. 10 -- start of LTE evolution, would be fully compliant with IMT-Advanced requirements. Supports carrier aggregation, extended multi-antenna transmission, relaying and intercell interference coordination [late 2010]
+			\item Rel. 11 -- Coordinated multipoint (CoMP), etc [late 2012]
+			\item Rel. 12 -- semi dynamic TDD, device-to-device communication, etc [2014]
+			\item Rel. 13 -- LTE Advanced Pro "4.5G" -- supports unlicensed spectra as a complement -- many improvements in MIMO, carrier aggregation, etc [2015]
+			\item Rel. 14 -- V2V, V2X communications [spring 2017]
+			\item Rel. 15 -- [2018]
+		\end{itemize}
+	\end{frame}
+
+	\begin{frame}[allowframebreaks]{Spectrum flexibility}
+	\end{frame}
+\end{document}
+

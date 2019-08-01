@@ -1,0 +1,37 @@
+\documentclass{beamer}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath, amssymb, amsthm, mathtools, gensymb}
+
+\setbeamertemplate{footline}[frame number]
+\beamertemplatenavigationsymbolsempty
+\usecolortheme{seagull}
+
+\newcommand{\tran}{\mathsf{T}}
+\newcommand{\mc}[1]{\ensuremath{\mathcal{#1}}}
+\newcommand{\mbb}[1]{\ensuremath{\mathbb{#1}}}	
+
+\title{Notes on Dahlmann, Parkvall, Skold's ``5G NR''\\Chapter 3 --  ``Spectrum for 5G''}
+\author{Lucas N. Ribeiro}
+\date{}
+
+\begin{document}
+	
+	\frame{\titlepage}
+	
+	\begin{frame}[allowframebreaks]
+		\textbf{Global spectrum situation for 5G}
+		\begin{itemize}
+			\item Spectrum of interest can be divided into low, medium and high frequencies.
+			\item Low -- Below 2 GHz -- coverage layer. Small bandwidths (20 MHz). 3GPP NR n71 and n28
+			\item Medium -- 3 - 6 GHz -- coverage, capacity and high data rates through wider bandwidth (100 MHz). n77 and n78
+			\item High -- above 24 GHz -- hotspot coverage with locally very high capacity. Bandwidths up to 400 MHz (more is possible with carrier aggregation). n257 and n258
+		\end{itemize}
+	
+		\textbf{Frequency bands for NR}
+		\begin{itemize}
+			\item Frequency bands within Release 15 are divided in: Frequency range 1 (FR1) for bands below 6 GHz, Frequency range 2 (FR2) for bands in 24.25-52.6 GHz.
+			\item NR will support both TDD and FDD, and some bands will be intended to supplementary downlink (SDL) and supplementary uplink (SUL)
+		\end{itemize}
+	\end{frame}
+\end{document}
+
