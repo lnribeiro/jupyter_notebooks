@@ -1,0 +1,118 @@
+\documentclass{beamer}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath, amssymb, amsthm, mathtools, gensymb}
+
+\setbeamertemplate{footline}[frame number]
+\beamertemplatenavigationsymbolsempty
+\usecolortheme{seagull}
+
+\newcommand{\tran}{\mathsf{T}}
+\newcommand{\mc}[1]{\ensuremath{\mathcal{#1}}}
+\newcommand{\mbb}[1]{\ensuremath{\mathbb{#1}}}
+
+\title{Notes on Nocedal and Wright's ``Numerical Optimization''\\Chapter 10 --  ``Least Squares Methods''}
+\author{Lucas N. Ribeiro}
+\date{}
+ 
+\begin{document}
+ 
+\frame{\titlepage}
+ 
+\begin{frame}[allowframebreaks]{Introduction}
+	\begin{itemize}
+		\item Least squares problems:
+		\[
+			f(x) = 0.5 \sum_{j=1}^m r_j^2(x)
+		\]
+		where $r_j$ is the residual function from $\mbb{R}^N$ to $\mbb{R}$.
+		\item Its gradient (notice that $f(x)$ is a summation of \emph{quadratic} functions):
+		\[
+			\nabla f(x) = \sum_{j=1}^m r_j(x) \nabla r_j(x) = J(x)^\tran r(x)
+		\]
+		\item Its Hessian (apply the product rule to $\nabla f(x)$):
+		\begin{align}
+			&\nabla f^2(x) = \sum_{j=1}^m \nabla r_j(x) \nabla r_j(x)^\tran + \sum_{j=1}^m r_j(x) \nabla^2 r_j(x) \\
+			&=J(x)^\tran J(x) + \sum_{j=1}^m r_j(x) \nabla^2 r_j(x) 
+		\end{align}
+		\item The Jacobian matrix: $J(x) = [\partial r_j / \partial x_i]$ for $i=1,2,\ldots,n$ and $j=1,2,\ldots,m$.
+		\item Once we have the Jacobian, we can easily calculate the gradient and the Hessian.
+		\item The second term in the Hessian is usually unimportant (because the residuals are small -- \emph{if the model fits!})
+		\item Solutions to minimize $f(x)$ are usually based on line search and trust region methods which exploit the available structure
+	\end{itemize}
+\end{frame}
+
+\begin{frame}[allowframebreaks]{Linear Least Squares}
+	\begin{itemize}
+		\item Model: $\phi(x;t_j)$
+		\item Measurement: $y_j$
+		\item Residual: $r_j(x) =\phi(x;t_j) - y_j$
+		\item In the linear least squares problem, the model is linear and the residual can be written as $r(x) = Ax-y$, for some $A$ matrix.
+		\item The objective function is now $f(x) = 0.5 \|Ax-y\|^2$
+		\item Its gradient: $\nabla f(x) = A^\tran A x - Ay$
+		\item Its Hessian: $\nabla^2 f(x) = A^\tran A$ (note that the second term vanished)
+		\item By setting $\nabla f(x) = 0$, we have the normal equations:
+		\[
+			A^\tran A x^* = J^\tran y
+		\]
+		\item One can solve the normal equation by Cholesky, QR or SVD factorization, in which the latter is the most robust
+		\item The SVD (of $A$) solution is given by (pseudo-inverse)
+		\[
+			x^* = \sum_{i=1}^n \frac{u_i^\tran y}{\sigma_i}v_i
+		\]
+		\item When the problem is too large, CG may be useful to solve the normal equations
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Non-Linear Least Squares -- Gauss-Netwon}
+	\begin{itemize}
+		\item Modified Newton's method with line search
+		\item Remember, Newton's method solves: $\nabla^2 f(x_k) p_k = -\nabla f(x_k)$.
+		\item We consider the approximation:
+		\begin{gather}
+			\nabla^2 f(x_k) \approx J_k^\tran J_k
+		\end{gather}
+		\item And the GN method solves
+		\[
+			J_k^\tran J_k p_k^{GN} = -J_k^\tran r_k
+		\]
+		\item It's similar to the normal equation $\rightarrow$ recast as linear LS problem!
+		\item For each step, solve:
+		\[
+			\min_p 0.5 \| J_k p + r_k \|^2
+		\]
+		\item Can be solved by means of SVD, QR, CG method, etc
+		\item Nice performance if $J_k$ has full rank.
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Non-Linear Least Squares -- Levenberg-Marquardt}
+	\begin{itemize}
+		\item Newton's method approximation with trust-region method
+		\item Works better than GN when the Jacobian is rank-deficient
+		\item Formulation:
+		\begin{equation}
+			\min_p 0.5 \| J_k p + r_k \|^2,\quad \text{subject to } \|p\| \leq \Delta_k
+		\end{equation}
+		\item When the GN solution lies in the trust region, it's the solution ($\|p^{GN}\| < \Delta$)
+		\item Otherwise, there is a $\lambda >0$ such that the solution of the LS problem $(J^\tran J + \lambda I)p = -J^\tran r$ (this problem is obtained by incorporating the trust region into the objective function by a Lagrange multiplier)
+		\item A $\lambda$ that matches $\Delta$ can be found by a root-finding algorithm
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Non-Linear Least Squares -- Orthogonal Distance Regression}
+	\begin{itemize}
+		\item Incorporate errors within the model
+		\[
+			y_j = \phi(x;t_j+\delta_j) + \epsilon_j
+		\]
+		\item define the minimization problem
+		\[
+			\min_{x, \delta_j, \epsilon_j} 0.5 \sum_{j=1}^m w_j^2 \epsilon_j^2 + 	d_j^2\sigma_j^2
+		\]
+		\item If all the weights are equal: shortest distance $\rightarrow$ (it's orthogonal to the curve at the point of intersection)
+		\item can be reformulated as a linear least squares problem
+	\end{itemize}
+\end{frame}
+
+\end{document}
+
